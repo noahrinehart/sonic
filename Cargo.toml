@@ -1,0 +1,8 @@
+[package]
+name = "sonic"
+version = "0.1.0"
+authors = ["Noah Rinehart <rinehart.noah@gmail.com>"]
+
+[dependencies]
+ws = "0.7.3"
+env_logger = "0.4.3"
