@@ -9,3 +9,10 @@ Project Description: A web-based secure text chat application that you can use t
 
 Languages: Rust, JavaScript
 Technologies: Iron (server framework), Hyper (HTTP library), Diesel(database), Vue(Front-end framework).
+
+
+### Todo
+ - [ ] decide what encryption to use, pgp, aes
+ - [ ] client encrypts
+ - [ ] what should server store?
+ - [ ] create frontend
