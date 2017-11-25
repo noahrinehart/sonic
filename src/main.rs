@@ -15,7 +15,7 @@ fn main() {
     // Setup cli args
     let matches = App::new("Sonic")
         .version("0.1")
-        .author("Noah Rinehart <nrinehar@purdue.edu>, Sanjeeti Suhag <suhag@purdue.edu>")
+        .author("Noah Rinehart <nrinehar@purdue.edu>, Sanjeet Suhag <suhag@purdue.edu>")
         .about("An encrypted websocket chat app.")
         .arg(Arg::with_name("port")
                 .help("The port of the server")
