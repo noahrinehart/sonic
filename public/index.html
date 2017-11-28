@@ -20,16 +20,23 @@
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="./gibberish-aes-1.0.0.min.js"></script>
     <script>
       $(function () {
         var socket = new WebSocket("ws://localhost:3021");
 
         socket.onmessage = function (event) {
-          $('#messages').append($('<li>').text(event.data));
+          var enctext = event.data;
+          console.log(enctext);
+          var plaintext = GibberishAES.dec(enctext, "SECRET");
+          $('#messages').append($('<li>').text(plaintext));
         }  
 
         $('form').submit(function() {
-          socket.send($('#m').val());
+          var plaintext = $('#m').val();
+          var enctext = GibberishAES.enc(plaintext, "SECRET");
+          console.log(enctext);
+          socket.send(enctext);
           $('#m').val('');
           return false;
         });

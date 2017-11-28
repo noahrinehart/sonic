@@ -29,7 +29,8 @@ impl Handler for Server {
 
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("Server got message '{}'. ", msg);
+        let replaced_msg = msg.clone().into_text().unwrap().replace("\n", "");
+        println!("Server got message '{}'. ", replaced_msg);
 
         // echo it back
         self.ws.send(msg)
@@ -53,7 +54,7 @@ fn main() {
 
     // Setup HTML server
     let mut mount = Mount::new();
-    mount.mount("/", Static::new(Path::new("public/index.html")));
+    mount.mount("/", Static::new(Path::new("public/")));
     let html_server = thread::spawn(move || {
         Iron::new(mount).http("127.0.0.1:3000").unwrap();
     });
