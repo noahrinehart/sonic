@@ -6,6 +6,6 @@ authors = ["Noah Rinehart <rinehart.noah@gmail.com>"]
 [dependencies]
 ws = "0.7.3"
 env_logger = "0.4.3"
-clap = "2.27.1"
-term = "0.4.6"
-
+iron = "0.5"
+mount = "0.3"
+staticfile = "0.4.0"
