@@ -28,13 +28,13 @@
         socket.onmessage = function (event) {
           var enctext = event.data;
           console.log(enctext);
-          var plaintext = GibberishAES.dec(enctext, "SECRET");
+          var plaintext = GibberishAES.dec(enctext, "PASSWORD");
           $('#messages').append($('<li>').text(plaintext));
         }  
 
         $('form').submit(function() {
           var plaintext = $('#m').val();
-          var enctext = GibberishAES.enc(plaintext, "SECRET");
+          var enctext = GibberishAES.enc(plaintext, "PASSWORD");
           console.log(enctext);
           socket.send(enctext);
           $('#m').val('');
