@@ -3,17 +3,30 @@ extern crate env_logger;
 extern crate iron;
 extern crate staticfile;
 extern crate mount;
+extern crate serde;
+extern crate serde_json;
+
+#[macro_use]
+extern crate serde_derive;
 
 use std::thread;
 use std::path::Path;
 
-use ws::{listen, Message, Sender, Handler, Result, Error, CloseCode};
+use ws::{listen, Message, Sender, Handler, CloseCode};
 use iron::Iron;
 use staticfile::Static;
 use mount::Mount;
+use serde_json::{Value};
 
 struct Server {
     ws: Sender,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SocketMessage {
+    message: String,
+    room: String,
+    encrypted: bool,
 }
 
 impl Handler for Server {
@@ -24,23 +37,27 @@ impl Handler for Server {
         } else {
             println!("Unable to obtain client's IP address.")
         }
-        Ok(())
+        println!("Someone has joined the room!");
+        self.ws.broadcast("Someone has joined the room!")
     }
 
 
-    fn on_message(&mut self, msg: Message) -> Result<()> {
+    fn on_message(&mut self, msg: Message) -> ws::Result<()> {
         let replaced_msg = msg.clone().into_text().unwrap().replace("\n", "");
         println!("Server got message '{}'. ", replaced_msg);
-
+        // TODO: Save message
+        let message: SocketMessage = serde_json::from_str(msg.as_text().expect("Into text")).expect("String can't be parsed!");
+        println!("{:?}", message);
         // echo it back
-        self.ws.send(msg)
+        self.ws.broadcast(msg)
     }
 
     fn on_close(&mut self, code: CloseCode, _: &str) {
         println!("Client disconnected with reason '{:?}'", code);
+        self.ws.broadcast("Someone has left the room!").unwrap();
     }
 
-    fn on_error(&mut self, err: Error) {
+    fn on_error(&mut self, err: ws::Error) {
         println!("Shutting down server for error: {}", err);
         self.ws.shutdown().unwrap();
     }
