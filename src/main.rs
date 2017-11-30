@@ -2,7 +2,7 @@ extern crate ws;
 extern crate env_logger;
 extern crate iron;
 extern crate staticfile;
-extern crate mount;
+extern crate router;
 extern crate serde;
 extern crate serde_json;
 
@@ -15,18 +15,11 @@ use std::path::Path;
 use ws::{listen, Message, Sender, Handler, CloseCode};
 use iron::Iron;
 use staticfile::Static;
-use mount::Mount;
+use router::Router;
 use serde_json::{Value};
 
 struct Server {
     ws: Sender,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct SocketMessage {
-    message: String,
-    room: String,
-    encrypted: bool,
 }
 
 impl Handler for Server {
@@ -37,8 +30,7 @@ impl Handler for Server {
         } else {
             println!("Unable to obtain client's IP address.")
         }
-        println!("Someone has joined the room!");
-        self.ws.broadcast("Someone has joined the room!")
+        Ok(())
     }
 
 
@@ -46,8 +38,19 @@ impl Handler for Server {
         let replaced_msg = msg.clone().into_text().unwrap().replace("\n", "");
         println!("Server got message '{}'. ", replaced_msg);
         // TODO: Save message
-        let message: SocketMessage = serde_json::from_str(msg.as_text().expect("Into text")).expect("String can't be parsed!");
-        println!("{:?}", message);
+        let message: String = msg.clone().into_text().unwrap();
+        
+        let data = r#"{
+            "name": "John Doe",
+            "age": 43,
+            "phones": [
+              "+44 1234567",
+              "+44 2345678"
+            ]
+          }"#;
+        let v: Value = serde_json::from_str(data).expect("Couldn't parse message!");
+
+        println!("{}", v["name"]);
         // echo it back
         self.ws.broadcast(msg)
     }
@@ -70,12 +73,13 @@ fn main() {
     env_logger::init().unwrap();
 
     // Setup HTML server
-    let mut mount = Mount::new();
-    mount.mount("/", Static::new(Path::new("public/")));
+    let mut router = Router::new();
+    router.get("/", Static::new(Path::new("public/index.html")), "index");
+    router.get("/:room", Static::new(Path::new("public/index.html")), "room");
     let html_server = thread::spawn(move || {
-        Iron::new(mount).http("127.0.0.1:3000").unwrap();
+        Iron::new(router).http("127.0.0.1:3000").unwrap();
     });
-    
+
     // Setup WebSocket server
     let ws_ip = "127.0.0.1:3021";
     let ws_server = thread::spawn(move || {
