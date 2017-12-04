@@ -1,22 +1,24 @@
 extern crate ws;
+extern crate nickel;
 extern crate env_logger;
-extern crate iron;
-extern crate staticfile;
-extern crate router;
 extern crate serde;
 extern crate serde_json;
 
-#[macro_use]
-extern crate serde_derive;
+// #[macro_use]
+// extern crate serde_derive;
+
 
 use std::thread;
 use std::path::Path;
 
 use ws::{listen, Message, Sender, Handler, CloseCode};
-use iron::Iron;
-use staticfile::Static;
-use router::Router;
+use nickel::{Nickel, HttpRouter, Request, Response, MiddlewareResult, Options};
 use serde_json::{Value};
+
+fn html_middleware<'a, D>(_: &mut Request<D>, res: Response<'a, D>) -> MiddlewareResult<'a, D> {
+    let path = Path::new("public/index.html");
+    res.send_file(path)
+}
 
 struct Server {
     ws: Sender,
@@ -73,12 +75,14 @@ fn main() {
     env_logger::init().unwrap();
 
     // Setup HTML server
-    let mut router = Router::new();
-    router.get("/", Static::new(Path::new("public/index.html")), "index");
-    router.get("/:room", Static::new(Path::new("public/index.html")), "room");
+    let mut html = Nickel::new();
+    html.options = Options::default().output_on_listen(false);
+    html.get("**", html_middleware);
+
     let html_server = thread::spawn(move || {
-        Iron::new(router).http("127.0.0.1:3000").unwrap();
+        html.listen("127.0.0.1:3000").expect("Html fail couldn't start!");
     });
+    
 
     // Setup WebSocket server
     let ws_ip = "127.0.0.1:3021";
@@ -87,9 +91,8 @@ fn main() {
             Server { ws: out }
         }).unwrap()
     });
-
-
     let _ = html_server.join();
     let _ = ws_server.join();
+    println!("Server started!");
 }
 
