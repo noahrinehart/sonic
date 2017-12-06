@@ -1,6 +1,4 @@
 use std::path::Path;
-use std::thread;
-use std::thread::{JoinHandle};
 use nickel::{Nickel, HttpRouter, Request, Response, MiddlewareResult, Options};
 
 pub fn html_middleware<'a>(_: &mut Request, res: Response<'a>) -> MiddlewareResult<'a> {

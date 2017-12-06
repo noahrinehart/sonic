@@ -1,20 +1,17 @@
 use db;
 
+use serde_json;
 use ws;
-use ws::{listen, Sender, Handler, CloseCode, Handshake};
-use nickel::{Nickel, HttpRouter, Request, Response, MiddlewareResult, Options};
-use serde_json::{Value};
-use bson::Bson;
-use mongodb::{Client, ThreadedClient};
-use mongodb::db::ThreadedDatabase;
+use ws::{Sender, Handler, CloseCode, Handshake};
 use mongodb::coll::Collection;
 use chrono::prelude::{DateTime, Utc};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WSMessage {
-    message: String,
-    room: String,
-    encrypted: bool,
-    created_at: DateTime<Utc>,
+    pub message: String,
+    pub room: String,
+    pub encrypted: bool,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 pub struct WSServer {
@@ -37,7 +34,8 @@ impl Handler for WSServer {
     fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
         // TODO: Save message
         let msg_str: String = msg.clone().into_text().unwrap();
-        db::save_to_db(&self.db, &msg_str);
+        let msg_obj: WSMessage = serde_json::from_str(&msg_str).unwrap();
+        db::save_to_db(&self.db, msg_obj.clone());
 
         // echo it back
         self.ws.broadcast(msg)
