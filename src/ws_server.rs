@@ -2,12 +2,14 @@ use db;
 
 use serde_json;
 use ws;
-use ws::{Sender, Handler, CloseCode, Handshake};
+use ws::{CloseCode, Handler, Handshake, Sender};
 use mongodb::coll::Collection;
+use bson::oid::ObjectId;
 use chrono::prelude::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WSMessage {
+    pub _id: Option<ObjectId>,
     pub message: String,
     pub room: String,
     pub encrypted: bool,
@@ -20,7 +22,6 @@ pub struct WSServer {
 }
 
 impl Handler for WSServer {
-
     fn on_open(&mut self, shake: Handshake) -> ws::Result<()> {
         if let Some(ip_addr) = try!(shake.remote_addr()) {
             println!("Connection opened from {}.", ip_addr)
@@ -32,8 +33,8 @@ impl Handler for WSServer {
 
 
     fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
-        // TODO: Save message
         let msg_str: String = msg.clone().into_text().unwrap();
+        println!("{}", msg_str);
         let msg_obj: WSMessage = serde_json::from_str(&msg_str).unwrap();
         db::save_to_db(&self.db, msg_obj.clone());
 

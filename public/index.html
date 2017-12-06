@@ -73,7 +73,7 @@
           var plaintext = $('#m').val();
           var password = $("#pass").val();
           var enctext = GibberishAES.enc(plaintext, password);
-          socket.send(JSON.stringify({message: enctext, room: window.location.pathname, encrypted: true}));
+          socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true}));
           $('#m').val('');
           return false;
         });
