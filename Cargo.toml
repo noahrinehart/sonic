@@ -5,13 +5,11 @@ authors = ["Noah Rinehart <rinehart.noah@gmail.com>"]
 
 [dependencies]
 ws = "0.7.3"
-env_logger = "0.4.3"
-iron = "0.5"
-mount = "0.3"
-router = "0.5"
 staticfile = "0.4.0"
 serde = "1.0.21"
 serde_json = "1.0"
 serde_derive = "1.0.21"
 nickel = "0.10.0"
-
+bson = "0.10.0"
+mongodb = "0.3.7"
+chrono = "0.4.0"

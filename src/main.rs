@@ -1,30 +1,38 @@
 extern crate ws;
 extern crate nickel;
-extern crate env_logger;
 extern crate serde;
 extern crate serde_json;
+#[macro_use] extern crate serde_derive;
+#[macro_use(bson, doc)] extern crate bson;
+extern crate mongodb;
+extern crate chrono;
 
-// #[macro_use]
-// extern crate serde_derive;
-
+pub mod html_server;
+pub mod ws_server;
+pub mod db;
 
 use std::thread;
 use std::path::Path;
 
-use ws::{listen, Message, Sender, Handler, CloseCode};
+use html_server::*;
+use db::*;
+
+
+use ws::{listen, Sender, Handler, CloseCode};
 use nickel::{Nickel, HttpRouter, Request, Response, MiddlewareResult, Options};
 use serde_json::{Value};
+use bson::Bson;
+use mongodb::{Client, ThreadedClient};
+use mongodb::db::ThreadedDatabase;
+use mongodb::coll::Collection;
+use chrono::prelude::{DateTime, Utc};
 
-fn html_middleware<'a, D>(_: &mut Request<D>, res: Response<'a, D>) -> MiddlewareResult<'a, D> {
-    let path = Path::new("public/index.html");
-    res.send_file(path)
-}
-
-struct Server {
+struct WSServer {
     ws: Sender,
+    db: Collection,
 }
 
-impl Handler for Server {
+impl Handler for WSServer {
 
     fn on_open(&mut self, shake: ws::Handshake) -> ws::Result<()> {
         if let Some(ip_addr) = try!(shake.remote_addr()) {
@@ -36,30 +44,17 @@ impl Handler for Server {
     }
 
 
-    fn on_message(&mut self, msg: Message) -> ws::Result<()> {
-        let replaced_msg = msg.clone().into_text().unwrap().replace("\n", "");
-        println!("Server got message '{}'. ", replaced_msg);
+    fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
         // TODO: Save message
-        let message: String = msg.clone().into_text().unwrap();
-        
-        let data = r#"{
-            "name": "John Doe",
-            "age": 43,
-            "phones": [
-              "+44 1234567",
-              "+44 2345678"
-            ]
-          }"#;
-        let v: Value = serde_json::from_str(data).expect("Couldn't parse message!");
+        let msg_str: String = msg.clone().into_text().unwrap();
+        save_to_db(&self.db, &msg_str);
 
-        println!("{}", v["name"]);
         // echo it back
         self.ws.broadcast(msg)
     }
 
     fn on_close(&mut self, code: CloseCode, _: &str) {
         println!("Client disconnected with reason '{:?}'", code);
-        self.ws.broadcast("Someone has left the room!").unwrap();
     }
 
     fn on_error(&mut self, err: ws::Error) {
@@ -70,29 +65,26 @@ impl Handler for Server {
 
 
 fn main() {
-
-    // Setup logging
-    env_logger::init().unwrap();
-
-    // Setup HTML server
+    // Setup HTML thread
     let mut html = Nickel::new();
     html.options = Options::default().output_on_listen(false);
-    html.get("**", html_middleware);
+    html.get("/*", html_middleware);
+    html.get("/api/:room", api_middleware);
 
-    let html_server = thread::spawn(move || {
+    let html_thread = thread::spawn(move || {
         html.listen("127.0.0.1:3000").expect("Html fail couldn't start!");
     });
-    
 
-    // Setup WebSocket server
+    // Setup WebSocket thread
     let ws_ip = "127.0.0.1:3021";
-    let ws_server = thread::spawn(move || {
+    let ws_thread = thread::spawn(move || {
         listen(ws_ip, |out| {
-            Server { ws: out }
+            let coll = get_database_col();
+            WSServer { ws: out, db: coll }
         }).unwrap()
     });
-    let _ = html_server.join();
-    let _ = ws_server.join();
-    println!("Server started!");
+
+    let _ = html_thread.join();
+    let _ = ws_thread.join();
 }
 

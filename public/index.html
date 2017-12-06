@@ -60,7 +60,9 @@
           } else {
             plaintext = message.message;
           }
-          $('#messages').append($('<li>').text(plaintext));
+          if (message.room === window.location.pathname) {
+            $('#messages').append($('<li>').text(plaintext));
+          }
         }
 
         socket.onopen = function (event) {
