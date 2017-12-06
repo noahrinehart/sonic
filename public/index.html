@@ -4,21 +4,63 @@
     <meta charset="utf-8">
     <title>Sonic</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 10; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; float: right; }
+      * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+      }
+
+      body { 
+        font: 13px Helvetica, Arial; 
+      }
+
+      form { 
+        padding: 3px; 
+        position: fixed; 
+        bottom: 0; 
+        width: 100%; 
+      }
+
+      #messages { l
+        ist-style-type: none; 
+        margin: 0; 
+        padding: 0; 
+      }
+
+      #messages li {
+
+      }
+
+      form input {
+        width: 80%;
+        height: 40px;
+        margin-left: 1%;
+        margin-right: 1%;
+        margin-bottom: .5%;
+        padding-left: 1%;
+        background: #D3D3D3;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 3px 5px 0 rgba(0, 0, 0, 0.19);
+      }
+
+      form button {
+        width: 7.5%;
+        background: #007AFF;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        color: #FFFFFF;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 3px 5px 0 rgba(0, 0, 0, 0.19);
+      }
+
     </style>
   </head>
   <body>
     <ul id="messages"></ul>
     <form action="">
-      <input type="text" id="m" autocomplete="off" placeholder="Enter message here" />
-      <input type="text" id="pass" autocomplete="on" placeholder="Set Session Password" />
+      <input type="text" id="message_input" autocomplete="off" placeholder="Enter message here" />
+      <input type="text" id="key_input" autocomplete="on" placeholder="Set Session Password" />
       <button>Send</button>
     </form>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
@@ -52,7 +94,7 @@
           var plaintext;
           if (message.encrypted) {
             try {
-              var password = $("#pass").val();
+              var password = $("#key_input").val();
               plaintext = GibberishAES.dec(message.message, password);
             } catch (exception) {
               plaintext = message.message;
@@ -70,11 +112,11 @@
         }
 
         $('form').submit(function() {
-          var plaintext = $('#m').val();
-          var password = $("#pass").val();
+          var plaintext = $('#message_input').val();
+          var password = $("#key_input").val();
           var enctext = GibberishAES.enc(plaintext, password);
           socket.send(JSON.stringify({message: enctext, room: window.location.pathname, encrypted: true}));
-          $('#m').val('');
+          $('#message_input').val('');
           return false;
         });
       });
