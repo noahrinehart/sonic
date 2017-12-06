@@ -45,38 +45,48 @@
     </script>
     <script>
       $(function () {
-        var socket = new WebSocket("ws://localhost:3021");
 
-        socket.onmessage = function (event) {
-          var message = JSON.parse(event.data);
-          var plaintext;
-          if (message.encrypted) {
-            try {
-              var password = $("#pass").val();
-              plaintext = GibberishAES.dec(message.message, password);
-            } catch (exception) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            console.log(xmlHttp.responseText);
+        }
+        xmlHttp.open("GET", "api/api", true);
+        xmlHttp.send(null);
+
+        var setUpSockets = function() {
+          var socket = new WebSocket("ws://localhost:3021");
+          socket.onmessage = function (event) {
+            var message = JSON.parse(event.data);
+            var plaintext;
+            if (message.encrypted) {
+              try {
+                var password = $("#pass").val();
+                plaintext = GibberishAES.dec(message.message, password);
+              } catch (exception) {
+                plaintext = message.message;
+              }
+            } else {
               plaintext = message.message;
             }
-          } else {
-            plaintext = message.message;
+            if (message.room === window.location.pathname) {
+              $('#messages').append($('<li>').text(plaintext));
+            }
           }
-          if (message.room === window.location.pathname) {
-            $('#messages').append($('<li>').text(plaintext));
+
+          socket.onopen = function (event) {
+            socket.send(JSON.stringify({message: "Someone has joined the room", room: window.location.pathname, encrypted: false}));
           }
-        }
 
-        socket.onopen = function (event) {
-          socket.send(JSON.stringify({message: "Someone has joined the room", room: window.location.pathname, encrypted: false}));
+          $('form').submit(function() {
+            var plaintext = $('#m').val();
+            var password = $("#pass").val();
+            var enctext = GibberishAES.enc(plaintext, password);
+            socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true}));
+            $('#m').val('');
+            return false;
+          });
         }
-
-        $('form').submit(function() {
-          var plaintext = $('#m').val();
-          var password = $("#pass").val();
-          var enctext = GibberishAES.enc(plaintext, password);
-          socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true}));
-          $('#m').val('');
-          return false;
-        });
       });
     </script>
   </body>
