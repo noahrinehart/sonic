@@ -24,12 +24,12 @@ fn main() {
     let html = html_server::new_server();
 
     let html_thread = thread::spawn(move || {
-        html.listen("127.0.0.1:3000")
+        html.listen("0.0.0.0:3000")
             .expect("Html server couldn't start!");
     });
 
     // Setup WebSocket thread
-    let ws_ip = "127.0.0.1:3021";
+    let ws_ip = "0.0.0.0:3021";
     let ws_thread = thread::spawn(move || {
         listen(ws_ip, |out| {
             let coll = db::get_database_col();
