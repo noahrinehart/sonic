@@ -12,7 +12,7 @@ Technologies: Iron (server framework), Hyper (HTTP library), Diesel(database), V
 
 
 ### Todo
- - [ ] decide what encryption to use, pgp, aes
- - [ ] client encrypts
- - [ ] what should server store?
- - [ ] create frontend
+ - [x] decide what encryption to use, pgp, aes
+ - [x] client encrypts
+ - [x] what should server store?
+ - [x] create frontend
