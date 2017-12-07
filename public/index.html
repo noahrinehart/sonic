@@ -59,8 +59,8 @@
   <body>
     <ul id="messages"></ul>
     <form action="">
-      <input type="text" id="message_input" autocomplete="off" placeholder="Enter message here" />
-      <input type="text" id="key_input" autocomplete="on" placeholder="Set Session Password" />
+      <input type="text" id="m" autocomplete="off" placeholder="Enter message here" />
+      <input type="text" id="pass" autocomplete="on" placeholder="Set Session Password" />
       <button>Send</button>
     </form>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
@@ -87,38 +87,47 @@
     </script>
     <script>
       $(function () {
-        var socket = new WebSocket("ws://localhost:3021");
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+          if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            console.log(xmlHttp.responseText);
+        }
+        xmlHttp.open("GET", "api/api", true);
+        xmlHttp.send(null);
 
-        socket.onmessage = function (event) {
-          var message = JSON.parse(event.data);
-          var plaintext;
-          if (message.encrypted) {
-            try {
-              var password = $("#key_input").val();
-              plaintext = GibberishAES.dec(message.message, password);
-            } catch (exception) {
+        var setUpSockets = function() {
+          var socket = new WebSocket("ws://localhost:3021");
+          socket.onmessage = function (event) {
+            var message = JSON.parse(event.data);
+            var plaintext;
+            if (message.encrypted) {
+              try {
+                var password = $("#pass").val();
+                plaintext = GibberishAES.dec(message.message, password);
+              } catch (exception) {
+                plaintext = message.message;
+              }
+            } else {
               plaintext = message.message;
             }
-          } else {
-            plaintext = message.message;
+            if (message.room === window.location.pathname) {
+              $('#messages').append($('<li>').text(plaintext));
+            }
           }
-          if (message.room === window.location.pathname) {
-            $('#messages').append($('<li>').text(plaintext));
+
+          socket.onopen = function (event) {
+            socket.send(JSON.stringify({message: "Someone has joined the room", room: window.location.pathname, encrypted: false}));
           }
-        }
 
-        socket.onopen = function (event) {
-          socket.send(JSON.stringify({message: "Someone has joined the room", room: window.location.pathname, encrypted: false}));
+          $('form').submit(function() {
+            var plaintext = $('#m').val();
+            var password = $("#pass").val();
+            var enctext = GibberishAES.enc(plaintext, password);
+            socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true}));
+            $('#m').val('');
+            return false;
+          });
         }
-
-        $('form').submit(function() {
-          var plaintext = $('#message_input').val();
-          var password = $("#key_input").val();
-          var enctext = GibberishAES.enc(plaintext, password);
-          socket.send(JSON.stringify({message: enctext, room: window.location.pathname, encrypted: true}));
-          $('#message_input').val('');
-          return false;
-        });
       });
     </script>
   </body>

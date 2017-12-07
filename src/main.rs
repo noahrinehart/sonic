@@ -1,11 +1,14 @@
-extern crate ws;
+#[macro_use(bson, doc)]
+extern crate bson;
+extern crate chrono;
+extern crate mongodb;
+#[macro_use]
 extern crate nickel;
 extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate serde_json;
-#[macro_use] extern crate serde_derive;
-#[macro_use(bson, doc)] extern crate bson;
-extern crate mongodb;
-extern crate chrono;
+extern crate ws;
 
 pub mod html_server;
 pub mod ws_server;
@@ -14,7 +17,6 @@ pub mod db;
 use std::thread;
 
 use ws_server::WSServer;
-
 use ws::listen;
 
 fn main() {
@@ -22,7 +24,8 @@ fn main() {
     let html = html_server::new_server();
 
     let html_thread = thread::spawn(move || {
-        html.listen("127.0.0.1:3000").expect("Html fail couldn't start!");
+        html.listen("127.0.0.1:3000")
+            .expect("Html server couldn't start!");
     });
 
     // Setup WebSocket thread
@@ -37,4 +40,3 @@ fn main() {
     let _ = html_thread.join();
     let _ = ws_thread.join();
 }
-
