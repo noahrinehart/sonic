@@ -105,12 +105,10 @@
       $(function () {
         $('#decrypt_button').click(function() {
           $('#messages li').each(function() {
-
-
+            console.log($(this));
           });
         });
         function appendMessage(message) {
-          console.log(message);
           var plaintext;
           if (message.encrypted) {
             try {
