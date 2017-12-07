@@ -93,11 +93,9 @@
       <div id="form_div">
         <form action="">
           <input type="text" id="m" autocomplete="off" placeholder="Enter message here" />
+          <button id = "decrypt_button" type="button">Decrypt</button>
+          <input type="text" id="pass" autocomplete="on" placeholder="Set Session Password" />
           <button>Send</button>
-        </form>
-        <form action="">
-          <input type="password" id="pass" autocomplete="off" placeholder="Enter encryption/decryption key here">
-          <button>Update</button>
         </form>
       </div>
     </div>
@@ -107,43 +105,47 @@
     </script>
     <script>
 
-      function appendMessage(message) {
+      $(function() {
+        $('#decrypt_button').click(function() {
+          $('#message').each(function() {
+
+          })
+        });
         
-        var plaintext;
-        if (message.encrypted) {
-          try {
-            var password = $("#pass").val();
-            plaintext = GibberishAES.dec(message.message, password);
-          } catch (exception) {
-            plaintext = message.message;
-          }
-        } else {
-          plaintext = message.message;
-        }
-
-        if (message.room === window.location.pathname) {
-
-          var message_class = 'message';
-          if (message.message === 'Someone has joined the room') {
-            message_class = 'notification';
-          }           
-
-          var img_div = '';
-          if (message.encrypted === 'true') {
-            img_div = '<div><img src=\'http://svgshare.com/i/4DT.svg\'/></div>';
+        function appendMessage(message) {
+        
+          // Decrypt, if message is encrypted.
+          var plaintext;
+          if (message.encrypted) {
+            try {
+              var password = $("#pass").val();
+              plaintext = GibberishAES.dec(message.message, password);
+            } catch (exception) {
+              plaintext = message.message;
+            }
           }
 
-          var date = new Date(message.created_at);
-          var date_div = '<div>' + date.toLocaleTimeString() + ' ' + date.toLocaleDateString() + '</div>';
+          // Display message.
+          if (message.room === window.location.pathname) {
 
-          $('#messages').append($('<div class=\'row\'><div class=\'' + message_class + '\'>' + plaintext + '</div><div class=\'row\'>' + img_div + date_div + '</div></div>'));
-          $('#messages_div').scrollTop(9999999);
+            var message_class = 'message';
+            if (message.message === 'Someone has joined the room') {
+              message_class = 'notification';
+            }           
+
+            var img_div = '';
+            if (message.encrypted === 'true') {
+              img_div = '<div><img src=\'http://svgshare.com/i/4DT.svg\'/></div>';
+            }
+
+            var date = new Date(message.created_at);
+            var date_div = '<div>' + date.toLocaleTimeString() + ' ' + date.toLocaleDateString() + '</div>';
+
+            $('#messages').append($('<div class=\'row\'><div class=\'' + message_class + '\'>' + plaintext + '</div><div class=\'row\'>' + img_div + date_div + '</div></div>'));
+            $('#messages_div').scrollTop(9999999);
+          }
         }
-      }
 
-
-
-      $(function () {
         var xmlHttp = new XMLHttpRequest();
         xmlHttp.onreadystatechange = function() {
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
@@ -154,8 +156,8 @@
 
         var runOnce;
         var setUpSockets = function() {
-          // var socket = new WebSocket("ws://107.170.222.174:3021");
-          var socket = new WebSocket("ws://localhost:3021");
+          var socket = new WebSocket("ws://107.170.222.174:3021");
+          // var socket = new WebSocket("ws://localhost:3021");
           socket.onmessage = function (event) {
             appendMessage(JSON.parse(event.data));
           }
@@ -166,9 +168,15 @@
 
           $('form').submit(function() {
             var plaintext = $('#m').val();
+            if (plaintext == '')
+              return;
             var password = $("#pass").val();
-            var enctext = GibberishAES.enc(plaintext, password);
-            socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true, created_at: new Date()}));
+            if (password === '') {
+              socket.send(JSON.stringify({message: plaintext.trim(), room: window.location.pathname, encrypted: false, created_at: new Date()}));
+            } else {
+              var enctext = GibberishAES.enc(plaintext, password);
+              socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true, created_at: new Date()}));
+            }
             $('#m').val('');
             return false;
           });
