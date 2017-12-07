@@ -4,49 +4,42 @@
     <meta charset="utf-8">
     <title>Sonic</title>
     <style>
-      * { 
-        margin: 0; 
-        padding: 0; 
-        box-sizing: border-box; 
-      }
-
-      body { 
+      html, body, #wrapper { 
         font: 13px Helvetica, Arial; 
+        height: 100%;
+        overflow: hidden;
       }
 
-      nav ul {
-        height:200px; 
-        width:18%;
+      #messages_div {
+        height: 85%;
+        width: 100%;
+        overflow: auto;
       }
 
-      nav ul {
-        overflow:hidden; 
-        overflow-y:scroll;
-      }
-
-      form { 
-        padding: 3px; 
-        position: fixed; 
-        bottom: 0; 
-        width: 100%; 
+      #form_div {
+        height: 15%;
+        width: 100%;
       }
 
       #messages { 
         list-style-type: none; 
-        margin: 0; 
-        padding: 0; 
       }
 
       #messages li {
         margin-left: 1%;
-        margin-bottom: 15px;
+        margin-bottom: 22.5px;
+      }
+
+      form { 
+        bottom: 0; 
+        width: 100%; 
       }
 
       .timestamp {
         color: #D4D4D4;
-        position: absolute;
-        right: 0;
+        float: right;
         margin-right: 2.5%;
+        margin-top: -37.5px;
       }
 
       .join_msg {
@@ -70,7 +63,7 @@
       }
 
       form button {
-        width: 7.5%;
+        width: 16.5%;
         background: #007AFF;
         border: none;
         border-radius: 5px;
@@ -82,15 +75,17 @@
     </style>
   </head>
   <body>
-    <div>
-      <ul id="messages"></ul>
-    </div>
-    <div>
-        <form action="">
-        <input type="text" id="m" autocomplete="off" placeholder="Enter message here" />
-        <input type="text" id="pass" autocomplete="on" placeholder="Set Session Password" />
-        <button>Send</button>
-      </form>
+    <div id="wrapper">
+      <div id="messages_div">
+        <ul id="messages"></ul>
+      </div>
+      <div id="form_div">
+          <form action="">
+          <input type="text" id="m" autocomplete="off" placeholder="Enter message here" />
+          <input type="text" id="pass" autocomplete="on" placeholder="Set Session Password" />
+          <button>Send</button>
+        </form>
+      </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script>
@@ -98,6 +93,7 @@
     </script>
     <script>
       function appendMessage(message) {
+        console.log(message);
         var plaintext;
         if (message.encrypted) {
           try {
@@ -120,6 +116,7 @@
           $('#messages').append($('<li class=' + li_class + '>').text(plaintext));
           var date = new Date(message.created_at);
           $('#messages').append($('<li class=\'timestamp\'>').text(date.toLocaleTimeString() + ' ' + date.toLocaleDateString()));
+          $('#messages_div').scrollTop(9999999);
         }
       }
 
@@ -143,14 +140,14 @@
           }
 
           socket.onopen = function (event) {
-            socket.send(JSON.stringify({message: "Someone has joined the room", room: window.location.pathname, encrypted: false}));
+            socket.send(JSON.stringify({message: "Someone has joined the room", room: window.location.pathname, encrypted: false, created_at: new Date()}));
           }
 
           $('form').submit(function() {
             var plaintext = $('#m').val();
             var password = $("#pass").val();
             var enctext = GibberishAES.enc(plaintext, password);
-            socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true}));
+            socket.send(JSON.stringify({message: enctext.trim(), room: window.location.pathname, encrypted: true, created_at: new Date()}));
             $('#m').val('');
             return false;
           });
@@ -160,7 +157,6 @@
           if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             var messages = JSON.parse(xmlHttp.responseText).messages;
             messages.forEach(function(message) {
-              console.log(message);
               appendMessage(message);
             });
             if (!runOnce) {
