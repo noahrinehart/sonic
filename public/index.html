@@ -138,7 +138,7 @@
             if (message.message === 'Someone has joined the room') {
               list_message = $("<div>").addClass("join_msg").text("Someone has joined the room");
             } else {
-              list_message = $("<div>").addClass("msg").text(message.message);
+              list_message = $("<div>").addClass("msg").text(plaintext);
             }
 
             var list_encrypted;
