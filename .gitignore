@@ -1,7 +1,5 @@
 /target/
 **/*.rs.bk
 .DS_Store
-<<<<<<< HEAD
 tags
-=======
->>>>>>> master
+.env
